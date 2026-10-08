@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: MIT
-'use strict';
 
-const FORMATS = { '??': 'cite', '*': 'b', '_': 'i', '~': 'sub', '^': 'sup', '-': 'del', '+': 'ins', '{{': 'code' };
+import type { Node, ListItem, TableCell } from './types';
+
+const FORMATS: Record<string, string> = { '??': 'cite', '*': 'b', '_': 'i', '~': 'sub', '^': 'sup', '-': 'del', '+': 'ins', '{{': 'code' };
 const MACRO = /^[ \t\u00a0]*(\{(code|noformat|quote|panel)(?::([^}]*))?\})/;
 const BULLET = /^[ \t\u00a0]*([#*-](?:[ \t\u00a0]*[#*-])*)[ \t\u00a0]+(?=\S)/;
 const URL = /^(?:https?|ftps?|file|irc):\/\/[a-zA-Z0-9!#-/:;=?@_~]+/;
 const ADDRESS = /^(?:(?:https?|ftps?|file|irc):\/\/|\/\/|#)[a-zA-Z0-9!#-/:;=?@_~]+$/;
 
-function text(value, literal = false) { return { kind: 'text', value, literal }; }
-function tag(name, children) { return { kind: 'tag', name, children }; }
+function text(value: string, literal = false): Node { return { kind: 'text', value, literal }; }
+function tag(name: string, children: Node[]): Node { return { kind: 'tag', name, children }; }
 
 class Parser {
+    private deadline: number;
+    private depth: number;
     constructor() {
         this.deadline = Date.now() + 5000;
         this.depth = 0;
@@ -21,12 +24,12 @@ class Parser {
         if (this.depth > 128) throw new Error('JIRA nesting exceeds 128 levels');
     }
 
-    nested(fn) {
+    nested<T>(fn: () => T): T {
         this.depth++;
         try { this.check(); return fn(); } finally { this.depth--; }
     }
 
-    closing(source, start, marker) {
+    closing(source: string, start: number, marker: string): number {
         let pos = start;
         while ((pos = source.indexOf(marker, pos)) !== -1) {
             this.check();
@@ -39,9 +42,9 @@ class Parser {
         return -1;
     }
 
-    inline(source, disabled = new Set()) {
+    inline(source: string, disabled = new Set<string>()): Node[] {
         return this.nested(() => {
-            const out = [];
+            const out: Node[] = [];
             let plain = '';
             let adjacent = true;
             const flush = () => { if (plain) { out.push(text(plain)); plain = ''; } };
@@ -107,7 +110,7 @@ class Parser {
         });
     }
 
-    blockRange(source, pos) {
+    blockRange(source: string, pos: number) {
         const match = MACRO.exec(source.slice(pos));
         if (!match) return null;
         const start = pos + match[0].length;
@@ -142,12 +145,12 @@ class Parser {
         return { match, start, end, finish: end + close.length };
     }
 
-    macro(source, pos) {
+    macro(source: string, pos: number): { node: Node; end: number } | null {
         const range = this.blockRange(source, pos);
         if (!range) return null;
         const { match, start, end } = range;
         const body = source.slice(start, end);
-        let node;
+        let node: Node;
         if (match[2] === 'quote') node = { kind: 'quote', children: this.document(body) };
         else {
             const raw = match[2] !== 'panel';
@@ -159,7 +162,7 @@ class Parser {
     }
 
     // Find a boundary without splitting opaque blocks or inline references.
-    boundary(source, start, pipes = false) {
+    boundary(source: string, start: number, pipes = false): number {
         for (let i = start; i < source.length; i++) {
             this.check();
             if (source[i] === '\\') { i++; continue; }
@@ -175,9 +178,9 @@ class Parser {
         return source.length;
     }
 
-    list(source, start) {
+    list(source: string, start: number): { node: Node; end: number } {
         let pos = start;
-        const items = [];
+        const items: ListItem[] = [];
         while (pos < source.length) {
             this.check();
             const marker = BULLET.exec(source.slice(pos));
@@ -201,13 +204,13 @@ class Parser {
         return { node: { kind: 'list', items }, end: pos };
     }
 
-    table(source, start) {
-        const rows = [];
-        let cells = [];
+    table(source: string, start: number): { node: Node; end: number } {
+        const rows: TableCell[][] = [];
+        let cells: TableCell[] = [];
         let pos = start;
         while (source[pos] === '|') {
             this.check();
-            const run = /^\|+/.exec(source.slice(pos))[0];
+            const run = /^\|+/.exec(source.slice(pos))![0];
             pos += run.length;
             if (pos === source.length || source[pos] === '\n') {
                 if (cells.length) { rows.push(cells); cells = []; }
@@ -231,10 +234,10 @@ class Parser {
         return { node: { kind: 'table', rows }, end: pos };
     }
 
-    document(source, mode = 'document') {
+    document(source: string, mode: 'document' | 'item' | 'cell' = 'document'): Node[] {
         return this.nested(() => {
-            const nodes = [];
-            let paragraph = [];
+            const nodes: Node[] = [];
+            let paragraph: Node[][] = [];
             let pos = 0;
             const flush = () => {
                 if (paragraph.length) {
@@ -265,7 +268,7 @@ class Parser {
                     if (/^\{(?:code|noformat|panel|quote)(?::|\})/.test(source.slice(i))) { end = i; break; }
                 }
                 if (heading || quote) {
-                    flush(); const match = heading || quote;
+                    flush(); const match = (heading || quote)!;
                     nodes.push(tag(heading ? heading[1] : 'blockquote', this.inline(source.slice(pos + match[0].length, end))));
                 } else {
                     const line = source.slice(pos, end);
@@ -282,8 +285,7 @@ class Parser {
     }
 }
 
-function parse(input) {
+export function parse(input: string): Node[] {
     if (typeof input !== 'string') throw new TypeError('str must be a string');
     return new Parser().document(input.replace(/\r\n?/g, '\n'));
 }
-module.exports = { parse };

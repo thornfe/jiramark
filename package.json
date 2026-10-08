@@ -1,7 +1,7 @@
 {
   "name": "@thornfe/jiramark",
   "description": "JIRA wiki markup to HTML with synchronous and worker-based APIs",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "author": "Thorn Wu",
   "keywords": [
     "jira"
@@ -15,12 +15,17 @@
   },
   "main": "lib/index.js",
   "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "6.0.3",
     "vitest": "^5.0.3"
   },
   "scripts": {
-    "test": "vitest run",
-    "check": "node --check lib/parser.js && node --check lib/render.js && node --check lib/index.js && node --check lib/worker-wrapper.js && node --check lib/worker.js && node --check bin/jira2html",
-    "test:watch": "vitest"
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "pnpm run build && vitest run",
+    "test:watch": "pnpm run build && vitest",
+    "prepack": "pnpm run build",
+    "build:watch": "tsc -p tsconfig.json --watch"
   },
   "license": "MIT",
   "engines": {
@@ -36,5 +41,7 @@
   "bin": {
     "jira2html": "bin/jira2html"
   },
-  "packageManager": "pnpm@10.23.0"
+  "packageManager": "pnpm@10.23.0",
+  "types": "lib/index.d.ts",
+  "type": "commonjs"
 }

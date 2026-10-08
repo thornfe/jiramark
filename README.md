@@ -73,11 +73,19 @@ errors exit with code 1.
 ```sh
 pnpm install --frozen-lockfile
 pnpm run check
+pnpm run build
 pnpm test
 ```
 
-Tests run with Vitest (`pnpm test` for a single run, `pnpm run test:watch` for watch
-mode). Development uses Node.js 24; CI also checks the latest Node.js 22 release.
+Sources live in `src/` and compile with TypeScript 6.0.3 in strict mode to
+CommonJS JavaScript and `.d.ts` declarations in `lib/`. Consumers do not need
+TypeScript. `pnpm pack` builds automatically; generated files are not committed.
+Both `require` and named `import` calls retain the existing API. `RenderOptions`
+is exported as a TypeScript type.
+
+Tests run against the compiled output with Vitest (`pnpm test` for a single run, `pnpm run test:watch` for watch
+mode; run `pnpm run build:watch` in a second terminal when editing TypeScript).
+`pnpm test` builds before running the unchanged contract suites. Development uses Node.js 24; CI also checks the latest Node.js 22 release.
 The MIT suites exercise text, composed documents, references, callback contracts,
 and runtime failure boundaries. See [test design and provenance](test/README.md).
 The former upstream compatibility suite has been removed; the new suite does not

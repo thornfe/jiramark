@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
-'use strict';
 
-function escape(value, preserveEntities = false) {
+import type { Node, RenderOptions } from './types';
+
+function escape(value: string, preserveEntities = false) {
     let out = '';
     for (let i = 0; i < value.length;) {
         if (preserveEntities && value[i] === '&') {
             const entity = /^&#?[a-zA-Z0-9]+;/.exec(value.slice(i));
             if (entity) { out += entity[0]; i += entity[0].length; continue; }
         }
-        const code = value.codePointAt(i);
+        const code = value.codePointAt(i)!;
         const char = String.fromCodePoint(code);
         out += code < 32 || code > 126 || /[&<>"']/.test(char) ? '&#' + code + ';' : char;
         i += char.length;
@@ -16,10 +17,10 @@ function escape(value, preserveEntities = false) {
     return out;
 }
 
-function render(tree, options = {}) {
-    const inline = children => children.map(node).join('');
-    const blocks = (children, separator = '\n') => children.map(node).join(separator);
-    function node(n) {
+export function render(tree: Node[], options: RenderOptions = {}): string {
+    const inline = (children: Node[]): string => children.map(node).join('');
+    const blocks = (children: Node[], separator = '\n'): string => children.map(node).join(separator);
+    function node(n: Node): string {
         switch (n.kind) {
         case 'text': return escape(n.value, !n.literal);
         case 'plain': return n.value;
@@ -33,7 +34,7 @@ function render(tree, options = {}) {
         case 'quote': return '<blockquote>\n' + blocks(n.children) + '\n</blockquote>';
         case 'panel': {
             const classes = n.style === 'panel' ? ['panel'] : [n.style === 'code' ? 'code' : 'preformatted', 'panel'];
-            const className = suffix => classes.map(name => name + suffix + ' ').join('');
+            const className = (suffix: string) => classes.map(name => name + suffix + ' ').join('');
             const title = n.title === null ? '' : '<div class="' + className('Header') + '"><b>' + escape(n.title, true) + '</b></div>\n';
             return '<div class="' + className('') + '">\n' + title + '<div class="' + className('Content') + '">\n' + blocks(n.children) + '\n</div>\n</div>';
         }
@@ -43,26 +44,25 @@ function render(tree, options = {}) {
         }).join('') + '</tr>').join('\n') + '\n</tbody></table>';
         case 'list': {
             let result = '';
-            const stack = [];
-            const close = () => { const entry = stack.pop(); result += (entry.item ? '</li>' : '') + '\n</' + entry.name + '>'; };
+            const stack: { name: string; item: boolean }[] = [];
+            const close = () => { const entry = stack.pop()!; result += (entry.item ? '</li>' : '') + '\n</' + entry.name + '>'; };
             for (const item of n.items) {
                 const name = item.ordered ? 'ol' : 'ul';
                 while (stack.length > item.level) close();
-                if (stack.length === item.level && stack.at(-1).name !== name) close();
+                if (stack.length === item.level && stack.at(-1)!.name !== name) close();
                 while (stack.length < item.level) {
                     result += (result ? '\n' : '') + '<' + name + '>';
                     stack.push({ name, item: false });
                 }
-                const entry = stack.at(-1);
+                const entry = stack.at(-1)!;
                 if (entry.item) result += '</li>';
                 result += '\n<li>' + blocks(item.children, '<br />\n'); entry.item = true;
             }
             while (stack.length) close();
             return result;
         }
-        default: throw new Error('Unknown JIRA node: ' + n.kind);
+        default: throw new Error('Unknown JIRA node: ' + (n as { kind: unknown }).kind);
         }
     }
     return blocks(tree);
 }
-module.exports = { render };
