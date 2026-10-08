@@ -1,17 +1,17 @@
 {
   "name": "@thornfe/jiramark",
   "description": "JIRA wiki markup to HTML with synchronous and worker-based APIs",
-  "version": "0.5.5",
+  "version": "0.6.0",
   "author": "Thorn Wu",
   "keywords": [
     "jira"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/thornfe/node-jiramark.git"
+    "url": "https://github.com/thornfe/jiramark.git"
   },
   "bugs": {
-    "url": "https://github.com/thornfe/node-jiramark/issues"
+    "url": "https://github.com/thornfe/jiramark/issues"
   },
   "main": "lib/index.js",
   "devDependencies": {

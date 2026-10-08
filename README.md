@@ -91,4 +91,4 @@ The original MPL tests are no longer in the current source tree. This change doe
 not relicense upstream code or establish legal clearance for the runtime rewrite;
 see [NOTICE.md](NOTICE.md) for provenance and the remaining review boundary.
 
-Issues and pull requests: https://github.com/thornfe/node-jiramark
+Issues and pull requests: https://github.com/thornfe/jiramark

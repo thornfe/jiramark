@@ -1,6 +1,6 @@
 # Contributing
 
-Open issues and pull requests at https://github.com/thornfe/node-jiramark.
+Open issues and pull requests at https://github.com/thornfe/jiramark.
 Use Node.js 22.12+ or 24+, install with `pnpm install --frozen-lockfile`, and run
 `pnpm run check` followed by `pnpm test` before submitting changes.
 
