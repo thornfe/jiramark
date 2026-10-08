@@ -1,0 +1,40 @@
+{
+  "name": "@thornfe/jiramark",
+  "description": "JIRA wiki markup to HTML with synchronous and worker-based APIs",
+  "version": "0.5.5",
+  "author": "Thorn Wu",
+  "keywords": [
+    "jira"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thornfe/node-jiramark.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thornfe/node-jiramark/issues"
+  },
+  "main": "lib/index.js",
+  "devDependencies": {
+    "vitest": "^5.0.3"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "check": "node --check lib/parser.js && node --check lib/render.js && node --check lib/index.js && node --check lib/worker-wrapper.js && node --check lib/worker.js && node --check bin/jira2html",
+    "test:watch": "vitest"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "lib/",
+    "bin/",
+    "LICENSE",
+    "README.md",
+    "NOTICE.md"
+  ],
+  "bin": {
+    "jira2html": "bin/jira2html"
+  },
+  "packageManager": "pnpm@10.23.0"
+}
